@@ -4,6 +4,7 @@ import java.awt.*;
 import java.util.ArrayList;
 
 import static com.snake.ai.modal.GameState.*;
+import static com.snake.ai.utils.Utils.getDirection;
 
 public class Snake extends Thread {
     public static final int HEAD_SNAKE_INDEX = 0;
@@ -19,6 +20,14 @@ public class Snake extends Thread {
         coords.add(newPointAfterMove(startPoint, tailDirection));
         this.color = color;
         this.denyDir = tailDirection;
+    }
+
+    public Snake(Snake snake, Direction denyDir) {
+        this.score = snake.score;
+        this.coords = snake.coords;
+        this.color = snake.color;
+        this.alive = snake.alive;
+        this.denyDir = denyDir;
     }
 
     public Point newPointAfterMove(Point prePoint, Direction direction) {
@@ -37,16 +46,18 @@ public class Snake extends Thread {
 
     public void eat(Direction direction) {
         Point point = coords.get(HEAD_SNAKE_INDEX);
-        coords.add(HEAD_SNAKE_INDEX, newPointAfterMove(point, direction));
+        Point nextPoint = newPointAfterMove(point, direction);
+        board[nextPoint.x][nextPoint.y] = Item.Empty;
+        foods.remove(nextPoint);
+        coords.add(HEAD_SNAKE_INDEX, nextPoint);
+
+
     }
 
     public boolean isEat(Direction direction) {
         Point point = coords.get(HEAD_SNAKE_INDEX);
         Point nextPoint = newPointAfterMove(point, direction);
-        if (board[nextPoint.x][nextPoint.y] == Board.Item.Food) {
-            foods.remove(nextPoint);
-            return true;
-        } else return false;
+        return (board[nextPoint.x][nextPoint.y] == Item.Food);
     }
 
     public boolean isSnakeAlive() {
@@ -55,6 +66,10 @@ public class Snake extends Thread {
 
     public Direction getDenyDir() {
         return denyDir;
+    }
+
+    public void moveForward() {
+        move(getDirection(denyDir));
     }
 
     public void move(Direction direction) {
@@ -77,7 +92,6 @@ public class Snake extends Thread {
             for (int i = coords.size() - 1; i > 0; i--)
                 coords.set(i, coords.get(i - 1));
             coords.set(HEAD_SNAKE_INDEX, newPointAfterMove(point, direction));
-
         }
     }
 
@@ -86,8 +100,8 @@ public class Snake extends Thread {
         while (isSnakeAlive()) {
             timeEnd = System.currentTimeMillis();
             if (timeEnd - timeStart >= updateTime) {
-                if (isEat(Direction.Down)) eat(Direction.Down);
-                else move(Direction.Down);
+                if (isEat(Direction.Up)) eat(Direction.Up);
+                else move(Direction.Up);
                 timeStart = timeEnd;
             }
         }

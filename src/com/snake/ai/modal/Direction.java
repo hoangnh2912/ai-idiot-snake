@@ -1,5 +1,5 @@
 package com.snake.ai.modal;
 
 public enum Direction {
-    Up, Down, Left, Right
+    Up, Down, Left, Right,DEAD_LOOK
 }
