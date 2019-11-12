@@ -3,11 +3,11 @@ package com.snake.ai.modal;
 import java.awt.*;
 import java.util.ArrayList;
 
-import static com.snake.ai.modal.GameState.board;
+import static com.snake.ai.modal.GameState.*;
 
 public class Node {
-    Point position;
-    Item value;
+    public Point position;
+    public Item value;
     ArrayList<Node> children;
     Direction denyDir;
     int dept = 0;
@@ -34,40 +34,52 @@ public class Node {
                 posLeft = new Point(position.x - 1, position.y),
                 posRight = new Point(position.x + 1, position.y);
         try {
-            Item itemDown = board[posDown.x][posDown.y], itemLeft = board[posLeft.x][posLeft.y], ItemRight = board[posRight.x][posRight.y], ItemUp = board[posUp.x][posUp.y];
+            Item itemDown =
+                    posDown.x < boardW ? posDown.y < boardH ?
+                            board[posDown.x][posDown.y] : null : null,
+                    itemLeft = posLeft.x < boardW ? posLeft.y < boardH ? board[posLeft.x][posLeft.y] : null : null,
+                    itemRight = posRight.x < boardW ? posRight.y < boardH ? board[posRight.x][posRight.y] : null : null,
+
+                    itemUp = posUp.x < boardW ? posUp.y < boardH ? board[posUp.x][posUp.y] : null : null;
             switch (denyDir) {
                 case Up:
-                    if (itemDown != null && itemDown != Item.NEAR_NODE) children.add(new Node(posDown, denyDir, this));
-                    if (itemLeft != null && itemLeft != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemDown)) children.add(new Node(posDown, denyDir, this));
+                    if (isNodeAvailable(itemLeft))
                         children.add(new Node(posLeft, Direction.Right, this));
-                    if (ItemRight != null && ItemRight != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemRight))
                         children.add(new Node(posRight, Direction.Left, this));
                     break;
                 case Down:
-                    if (ItemUp != null && ItemUp != Item.NEAR_NODE) children.add(new Node(posUp, denyDir, this));
-                    if (itemLeft != null && itemLeft != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, denyDir, this));
+                    if (isNodeAvailable(itemLeft))
                         children.add(new Node(posLeft, Direction.Right, this));
-                    if (ItemRight != null && ItemRight != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemRight))
+
                         children.add(new Node(posRight, Direction.Left, this));
                     break;
                 case Right:
-                    if (ItemUp != null && ItemUp != Item.NEAR_NODE) children.add(new Node(posUp, Direction.Down, this));
-                    if (itemLeft != null && itemLeft != Item.NEAR_NODE) children.add(new Node(posLeft, denyDir, this));
-                    if (itemDown != null && itemDown != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, Direction.Down, this));
+                    if (isNodeAvailable(itemLeft))
+                        children.add(new Node(posLeft, denyDir, this));
+                    if (isNodeAvailable(itemDown))
                         children.add(new Node(posDown, Direction.Up, this));
                     break;
                 case Left:
-                    if (ItemUp != null && ItemUp != Item.NEAR_NODE) children.add(new Node(posUp, Direction.Down, this));
-                    if (ItemRight != null && ItemRight != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, Direction.Down, this));
+                    if (isNodeAvailable(itemRight))
                         children.add(new Node(posRight, denyDir, this));
-                    if (itemDown != null && itemDown != Item.NEAR_NODE)
+                    if (isNodeAvailable(itemDown))
                         children.add(new Node(posDown, Direction.Up, this));
                     break;
             }
         } catch (Exception e) {
-//            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
-//        System.out.println(children.size());
         return children;
+    }
+
+
+    private boolean isNodeAvailable(Item item) {
+        return item == Item.Empty || item == Item.Food;
     }
 }
