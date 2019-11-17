@@ -48,9 +48,10 @@ public class Board extends JPanel implements Runnable {
 
     private void initData() {
         snakes.add(new Snake(new Point(2, 2), Direction.Up, Color.green));
-        snakes.add(new Snake(new Point(3, 3), Direction.Down, Color.orange));
-        snakes.add(new Snake(new Point(4, 4), Direction.Down, Color.yellow));
-        snakes.add(new Snake(new Point(5, 5), Direction.Down, Color.blue));
+//        snakes.add(new Snake(new Point(3, 3), Direction.Down, Color.orange));
+//        snakes.add(new Snake(new Point(4, 4), Direction.Down, Color.yellow));
+//        snakes.add(new Snake(new Point(5, 5), Direction.Down, Color.blue));
+        snakes.add(new Player(new Point(6, 6), Direction.Up, Color.orange));
         Random rand = new Random();
         for (int i = 0; i < num_food; i++) {
             int x = rand.nextInt(boardW);
@@ -127,10 +128,10 @@ public class Board extends JPanel implements Runnable {
 
     public void start() {
         thread.start();
-        snakes.get(0).start();
+//        snakes.get(0).start();
         snakes.get(1).start();
-        snakes.get(2).start();
-        snakes.get(3).start();
+//        snakes.get(2).start();
+//        snakes.get(3).start();
     }
 
     @Override

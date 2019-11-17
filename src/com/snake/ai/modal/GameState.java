@@ -16,4 +16,9 @@ public class GameState {
     public static final int boardW = 60; // how many cells wide the board will be
     public static final int boardH = 60; // how many cells tall the board will be
     public static final int blockSize = 10; // size of each cell in the GUI
+    public static int movePlayer = 39; // size of each cell in the GUI
+    public static final int PRESS_RIGHT = 39;
+    public static final int PRESS_LEFT = 37;
+    public static final int PRESS_UP = 38;
+    public static final int PRESS_DOWN = 40;
 }

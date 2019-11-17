@@ -4,7 +4,7 @@ import com.snake.ai.modal.Direction;
 
 import java.awt.*;
 
-import static com.snake.ai.modal.GameState.foods;
+import static com.snake.ai.modal.GameState.*;
 
 public class Utils {
     public static Direction getDirection(Direction denyDir) {
@@ -21,13 +21,27 @@ public class Utils {
         return Direction.DEAD_LOOK;
     }
 
+    public static Direction getDirectionPlayer() {
+        switch (movePlayer) {
+            case PRESS_DOWN:
+                return Direction.Down;
+            case PRESS_UP:
+                return Direction.Up;
+            case PRESS_RIGHT:
+                return Direction.Right;
+            case PRESS_LEFT:
+                return Direction.Left;
+        }
+        return Direction.Up;
+    }
+
     public static Point getNearestFood(Point snakeHead) {
         double minDis = Double.MAX_VALUE;
         Point nearestFood = null;
         for (Point p : foods) {
             if (minDis > getDistance(p, snakeHead)) {
                 minDis = getDistance(p, snakeHead);
-                nearestFood = new Point(p.x,p.y);
+                nearestFood = new Point(p.x, p.y);
             }
         }
         return nearestFood;

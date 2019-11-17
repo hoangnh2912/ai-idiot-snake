@@ -13,6 +13,7 @@ public class Snake extends Thread {
     public int score = 0;
     public ArrayList<Point> coords;
     Color color;
+    boolean isBot = true;
     private boolean alive = true;
     public Direction denyDir;
     private Point nearestFood = null;
@@ -34,6 +35,7 @@ public class Snake extends Thread {
         this.color = snake.color;
         this.alive = snake.alive;
         this.denyDir = denyDir;
+        this.isBot = snake.isBot;
     }
 
     public Point newPointAfterMove(Point prePoint, Direction direction) {
@@ -53,6 +55,7 @@ public class Snake extends Thread {
     public void eat(Direction direction) {
         Point point = coords.get(HEAD_SNAKE_INDEX);
         Point nextPoint = newPointAfterMove(point, direction);
+        score++;
         coords.add(HEAD_SNAKE_INDEX, nextPoint);
         foods.remove(nextPoint);
     }

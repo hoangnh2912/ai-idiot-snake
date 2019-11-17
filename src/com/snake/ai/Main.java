@@ -1,6 +1,7 @@
 package com.snake.ai;
 
 import com.snake.ai.modal.Board;
+import com.snake.ai.modal.PlayerKey;
 
 import javax.swing.*;
 
@@ -11,6 +12,7 @@ public class Main extends JFrame {
 
     private void initFrame() {
         Board board = new Board();
+        board.addKeyListener(new PlayerKey());
         add(board);
         board.start();
         setResizable(false);
