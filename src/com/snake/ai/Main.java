@@ -14,7 +14,6 @@ public class Main extends JFrame {
         Board board = new Board();
         board.addKeyListener(new PlayerKey());
         add(board);
-        board.start();
         setResizable(false);
         setTitle("Con rắn dễ thương");
         pack();

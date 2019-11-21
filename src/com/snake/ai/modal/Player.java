@@ -1,30 +1,35 @@
 package com.snake.ai.modal;
 
-import com.snake.ai.utils.Utils;
-
 import java.awt.*;
+import java.util.ArrayList;
 
 import static com.snake.ai.modal.GameState.*;
+import static com.snake.ai.utils.Utils.getDenyDir;
+
 
 public class Player extends Snake {
 
-    public Player(Point startPoint, Direction tailDirection, Color color) {
-        super(startPoint, tailDirection, color);
+    Player(Point startPoint, Direction tailDirection, Color color, ArrayList<Point> foods, Item[][] board) {
+        super(startPoint, tailDirection, color,foods, board);
         this.isBot = false;
+    }
+
+    private Direction getDirectionPlayer() {
+        switch (movePlayer) {
+            case PRESS_DOWN:
+                return Direction.Down;
+            case PRESS_UP:
+                return Direction.Up;
+            case PRESS_RIGHT:
+                return Direction.Right;
+            case PRESS_LEFT:
+                return Direction.Left;
+        }
+        return Direction.Down;
     }
 
     @Override
     public void run() {
-        while (isSnakeAlive()) {
-            timeEnd = System.currentTimeMillis();
-            if (timeEnd - timeStart >= updateTime) {
-                    Direction move = Utils.getDirectionPlayer();
-                    if (isEat(move)) {
-                        eat(move);
-                    } else
-                        move(move);
-                timeStart = timeEnd;
-            }
-        }
+        nextMove = getDirectionPlayer() == getDenyDir(nextMove) ? nextMove : getDirectionPlayer();
     }
 }
