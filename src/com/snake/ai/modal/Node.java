@@ -3,13 +3,13 @@ package com.snake.ai.modal;
 import java.awt.*;
 import java.util.ArrayList;
 
+import static com.snake.ai.modal.Direction.*;
 import static com.snake.ai.modal.GameState.*;
 
-public class Node {
+class Node {
     Point position;
     private ArrayList<Node> children;
     Direction denyDir;
-    private int dept = 0;
     private Node root = null;
     private Item[][] board;
 
@@ -26,8 +26,7 @@ public class Node {
         this.root = root;
     }
 
-    ArrayList<Node> getChildren() {
-        dept++;
+    synchronized ArrayList<Node> getChildren() {
         children = new ArrayList<>();
         Point posUp = new Point(position.x, position.y - 1),
                 posDown = new Point(position.x, position.y + 1),
@@ -36,40 +35,30 @@ public class Node {
         try {
             Item itemDown =
                     posDown.x < boardW ? posDown.y < boardH ?
-                            board[posDown.x][posDown.y] : Item.DEAD : Item.DEAD,
-                    itemLeft = posLeft.x < boardW ? posLeft.y < boardH ? board[posLeft.x][posLeft.y] : Item.DEAD : Item.DEAD,
-                    itemRight = posRight.x < boardW ? posRight.y < boardH ? board[posRight.x][posRight.y] : Item.DEAD : Item.DEAD,
-
-                    itemUp = posUp.x < boardW ? posUp.y < boardH ? board[posUp.x][posUp.y] : Item.DEAD : Item.DEAD;
+                            board[posDown.x][posDown.y] : Item.WALL : Item.WALL,
+                    itemLeft = posLeft.x < boardW ? posLeft.y < boardH ? board[posLeft.x][posLeft.y] : Item.WALL : Item.WALL,
+                    itemRight = posRight.x < boardW ? posRight.y < boardH ? board[posRight.x][posRight.y] : Item.WALL : Item.WALL,
+                    itemUp = posUp.x < boardW ? posUp.y < boardH ? board[posUp.x][posUp.y] : Item.WALL : Item.WALL;
+            Node nodeDown = new Node(posDown, Up, this, board),
+                    nodeUp = new Node(posUp, Down, this, board),
+                    nodeRight = new Node(posRight, Left, this, board),
+                    nodeLeft = new Node(posLeft, Right, this, board);
+            if (isNodeAvailable(itemUp)) children.add(nodeUp);
+            if (isNodeAvailable(itemDown)) children.add(nodeDown);
+            if (isNodeAvailable(itemRight)) children.add(nodeRight);
+            if (isNodeAvailable(itemLeft)) children.add(nodeLeft);
             switch (denyDir) {
                 case Up:
-                    if (isNodeAvailable(itemDown)) children.add(new Node(posDown, denyDir, this, board));
-                    if (isNodeAvailable(itemLeft))
-                        children.add(new Node(posLeft, Direction.Right, this, board));
-                    if (isNodeAvailable(itemRight))
-                        children.add(new Node(posRight, Direction.Left, this, board));
+                    children.remove(nodeUp);
                     break;
                 case Down:
-                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, denyDir, this, board));
-                    if (isNodeAvailable(itemLeft))
-                        children.add(new Node(posLeft, Direction.Right, this, board));
-                    if (isNodeAvailable(itemRight))
-
-                        children.add(new Node(posRight, Direction.Left, this, board));
+                    children.remove(nodeDown);
                     break;
                 case Right:
-                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, Direction.Down, this, board));
-                    if (isNodeAvailable(itemLeft))
-                        children.add(new Node(posLeft, denyDir, this, board));
-                    if (isNodeAvailable(itemDown))
-                        children.add(new Node(posDown, Direction.Up, this, board));
+                    children.remove(nodeRight);
                     break;
                 case Left:
-                    if (isNodeAvailable(itemUp)) children.add(new Node(posUp, Direction.Down, this, board));
-                    if (isNodeAvailable(itemRight))
-                        children.add(new Node(posRight, denyDir, this, board));
-                    if (isNodeAvailable(itemDown))
-                        children.add(new Node(posDown, Direction.Up, this, board));
+                    children.remove(nodeLeft);
                     break;
             }
         } catch (Exception e) {
@@ -79,7 +68,7 @@ public class Node {
     }
 
 
-    private boolean isNodeAvailable(Item item) {
-        return item == Item.Empty || item == Item.Food || item == Item.DEAD;
+    private synchronized boolean isNodeAvailable(Item item) {
+        return item == Item.Empty || item == Item.Food || item == Item.NearestFood || item == Item.NearMove;
     }
 }

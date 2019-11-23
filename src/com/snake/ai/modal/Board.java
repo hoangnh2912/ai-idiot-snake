@@ -15,7 +15,7 @@ public class Board extends JPanel implements Runnable {
     private final int EMPTY_FOOD = 9;
     private final int blockSize = 10; // size of each cell in the GUI
     private final int num_food = 100;
-    private final long updateTime = 60; // (lower = faster, higher = slower)
+    private final long updateTime = 30; // (lower = faster, higher = slower)
     private long timeStart;
     private ArrayList<Snake> snakes = new ArrayList<>();
     private ArrayList<Point> foods = new ArrayList<>();
@@ -43,6 +43,7 @@ public class Board extends JPanel implements Runnable {
         snakes.add(new Snake(new Point(2, 2), Direction.Up, Color.green, foods, board));
         snakes.add(new Snake(new Point(56, 6), Direction.Up, Color.orange, foods, board));
         snakes.add(new Snake(new Point(27, 8), Direction.Up, Color.yellow, foods, board));
+        snakes.add(new Snake(new Point(30, 22), Direction.Up, Color.cyan, foods, board));
 //        snakes.add(new Player(new Point(30, 9), Direction.Up, Color.pink));
         Random rand = new Random();
         for (int i = 0; i < num_food; i++) {
@@ -51,8 +52,8 @@ public class Board extends JPanel implements Runnable {
             Point point = new Point(x, y);
             if (!foods.contains(point) && x > 2 && x < boardW - 2 && y > 2 && y < boardH - 2) foods.add(point);
         }
-        for (Snake snake : snakes)
-            snake.start();
+//        for (Snake snake : snakes)
+//            snake.start();
     }
 
     @Override
@@ -62,14 +63,14 @@ public class Board extends JPanel implements Runnable {
         drawBoard(g);
     }
 
-    private int indexHeadCell(Point point) {
+    private synchronized int indexHeadCell(Point point) {
         for (int i = 0; i < snakes.size(); i++)
             if (point.equals(snakes.get(i).coords.get(HEAD_SNAKE_INDEX)))
                 return i;
         return EMPTY_HEAD_SNAKE;
     }
 
-    private int indexBodyCell(Point point) {
+    private synchronized int indexBodyCell(Point point) {
         for (int i = 0; i < snakes.size(); i++)
             if (snakes.get(i).coords.contains(point)) {
                 return i;
@@ -77,19 +78,21 @@ public class Board extends JPanel implements Runnable {
         return EMPTY_BODY_SNAKE;
     }
 
-    private void drawBoard(Graphics g) {
+    private synchronized void drawBoard(Graphics g) {
         g.setColor(Color.lightGray);
         g.fillRect(0, 0, getSize().width, getSize().height);
         for (int i = 0; i < boardW; i++) {
             for (int j = 0; j < boardH; j++) {
                 Item cell = board[i][j];
-                if (cell == Item.DEAD)
-                    g.setColor(Color.blue);
-                else if (cell == Item.Empty) {
+                if (cell == Item.Empty) {
                     g.setColor(Color.white);
                 } else if (cell == Item.Food) {
+                    g.setColor(Color.blue);
+                } else if (cell == Item.NearestFood)
                     g.setColor(Color.red);
-                } else {
+                else if (cell == Item.NearMove)
+                    g.setColor(Color.pink);
+                else {
                     int index = indexHeadCell(new Point(i, j));
                     if (index != EMPTY_HEAD_SNAKE) {
                         g.fillRect((i * blockSize) + 1, (j * blockSize) + 1, blockSize - 1, blockSize - 1);
@@ -108,19 +111,22 @@ public class Board extends JPanel implements Runnable {
 
     }
 
-    private void snakeMove() {
+    private synchronized void snakeMove() {
         try {
             for (Snake snake : snakes) {
-                if (isEat(snake))
-                    eat(snake);
-                else move(snake);
+                if (snake.isAlive) {
+                    if (isEat(snake))
+                        eat(snake);
+                    else move(snake);
+                } else snakes.remove(snake);
+                clearNearMove();
             }
         } catch (Exception ignored) {
         }
     }
 
 
-    private void eat(Snake snake) {
+    private synchronized void eat(Snake snake) {
         Direction direction = snake.nextMove;
         Point point = snake.coords.get(HEAD_SNAKE_INDEX);
         Point nextPoint = snake.newPointAfterMove(point, direction);
@@ -129,34 +135,33 @@ public class Board extends JPanel implements Runnable {
         foods.remove(nextPoint);
     }
 
-    private void move(Snake snake) {
+    private synchronized void move(Snake snake) {
         Direction direction = snake.nextMove;
-        if (direction != snake.denyDir) {
-            snake.denyDir = getDenyDir(direction);
-            Point headPoint = snake.coords.get(HEAD_SNAKE_INDEX);
-            Point newPoint = snake.newPointAfterMove(headPoint, direction);
-            try {
-                if (board[newPoint.x][newPoint.y] == Item.Snake || board[newPoint.x][newPoint.y] == Item.SnakeHead) {
-                    System.out.println("dead " + board[newPoint.x][newPoint.y]);
-                    for (Point p : snake.coords)
-                        board[p.x][p.y] = Item.Empty;
-                    board[newPoint.x][newPoint.y] = Item.DEAD;
-                    snakes.remove(snake);
-                } else {
-                    Point tailPoint = snake.coords.get(snake.coords.size() - 1);
-                    board[tailPoint.x][tailPoint.y] = Item.Empty;
-                    snake.coords.remove(tailPoint);
-                    snake.coords.add(HEAD_SNAKE_INDEX, newPoint);
-                }
-            } catch (Exception e) {
-                System.out.println("dead out of move");
+//        if (direction == snake.denyDir) System.out.println("wrong");
+//        if (direction != snake.denyDir) {
+        snake.denyDir = getDenyDir(direction);
+        Point headPoint = snake.coords.get(HEAD_SNAKE_INDEX);
+        Point newPoint = snake.newPointAfterMove(headPoint, direction);
+        try {
+            if (board[newPoint.x][newPoint.y] == Item.Snake || board[newPoint.x][newPoint.y] == Item.SnakeHead) {
+                System.out.println("dead " + board[newPoint.x][newPoint.y]);
+                for (Point p : snake.coords)
+                    board[p.x][p.y] = Item.Empty;
                 snakes.remove(snake);
+            } else {
+            snake.coords.add(HEAD_SNAKE_INDEX, newPoint);
+            Point tailPoint = snake.coords.get(snake.coords.size() - 1);
+            board[tailPoint.x][tailPoint.y] = Item.Empty;
+            snake.coords.remove(tailPoint);
             }
-
+        } catch (Exception e) {
+            System.out.println("dead out of move " + e.getMessage());
         }
+
+//        }
     }
 
-    private boolean isEat(Snake snake) {
+    private synchronized boolean isEat(Snake snake) {
         Direction direction = snake.nextMove;
         Point point = snake.coords.get(HEAD_SNAKE_INDEX);
         Point nextPoint = snake.newPointAfterMove(point, direction);
@@ -166,21 +171,27 @@ public class Board extends JPanel implements Runnable {
         } catch (Exception e) {
             check = null;
         }
-        return (check == Item.Food);
+        return (check == Item.Food || check == Item.NearestFood);
     }
 
-    private void updateBoard() {
+    private synchronized void updateBoard() {
         for (Snake snake : snakes)
             for (int i = 0; i < snake.coords.size(); i++)
                 board[snake.coords.get(i).x][snake.coords.get(i).y] = i == 0 ? Item.SnakeHead : Item.Snake;
         for (Point food : foods)
-            board[food.x][food.y] = Item.Food;
+            board[food.x][food.y] = board[food.x][food.y] == Item.NearestFood ? Item.NearestFood : Item.Food;
     }
 
-    boolean isDone = false, isRun = false;
+
+    private synchronized void clearNearMove() {
+        for (int i = 0; i < boardW; i++)
+            for (int j = 0; j < boardH; j++)
+                if (board[i][j] == Item.NearMove) board[i][j] = Item.Empty;
+    }
 
     @Override
     public void run() {
+        boolean isDone = false, isRun = false;
         while (true) {
             long timeEnd = System.currentTimeMillis();
             if (!isRun) {

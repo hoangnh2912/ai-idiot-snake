@@ -12,11 +12,11 @@ public class Snake extends Thread {
     int score = 0;
     ArrayList<Point> coords;
     Color color;
-    boolean isBot = true;
+    boolean isBot = true, isAlive = true;
     Direction denyDir, nextMove;
-    private Node nextMoveToFood = null;
+    private Node nextMoveToFood;
     private Node node;
-    private ArrayList<Point> foods = new ArrayList<>();
+    private ArrayList<Point> foods;
     private Item[][] board;
 
     Snake(Point startPoint, Direction tailDirection, Color color, ArrayList<Point> foods, Item[][] board) {
@@ -27,11 +27,11 @@ public class Snake extends Thread {
         this.denyDir = tailDirection;
         this.board = board;
         node = new Node(coords.get(HEAD_SNAKE_INDEX), denyDir, board);
-        nextMove = getDenyDir(tailDirection);
+        nextMove = getDenyDir(denyDir);
         this.foods = foods;
     }
 
-    Point newPointAfterMove(Point prePoint, Direction direction) {
+    synchronized Point newPointAfterMove(Point prePoint, Direction direction) {
         switch (direction) {
             case Up:
                 return new Point(prePoint.x, prePoint.y - 1);
@@ -42,42 +42,54 @@ public class Snake extends Thread {
             case Right:
                 return new Point(prePoint.x + 1, prePoint.y);
         }
+        System.out.println("pre");
         return prePoint;
     }
 
-    private double getDistance(Point p1, Point p2) {
+    private synchronized double getDistance(Point p1, Point p2) {
         return Math.sqrt(Math.pow((p1.x - p2.x), 2) + Math.pow((p1.y - p2.y), 2));
     }
 
-    private Point getNearestFood(Point snakeHead, ArrayList<Point> foods) {
+    private synchronized Point getNearestFood(Point snakeHead, ArrayList<Point> foods) {
         double minDis = Double.MAX_VALUE;
         Point nearestFood = null;
         for (Point p : foods) {
             if (minDis > getDistance(p, snakeHead)) {
                 minDis = getDistance(p, snakeHead);
-                nearestFood = new Point(p.x, p.y);
+                nearestFood = p;
             }
         }
+        board[nearestFood.x][nearestFood.y] = Item.NearestFood;
         return nearestFood;
     }
 
+    int i = 0;
+
     private synchronized Direction findNextMove(Node root) {
+        i++;
+        if (!node.position.equals(coords.get(0))) System.out.println(color + " wrong - fine time :" + i);
         Point nearestFood = getNearestFood(coords.get(HEAD_SNAKE_INDEX), foods);
         ArrayList<Node> list = root.getChildren();
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             System.out.println("empty list");
+            isAlive = false;
 //            renewFindMove();
-            node = new Node(coords.get(HEAD_SNAKE_INDEX), denyDir, board);
 //            return findNextMove(node);
         } else {
             double minDis = Float.MAX_VALUE;
-            for (Node n : list)
+            for (Node n : list) {
+                board[n.position.x][n.position.y] = Item.NearMove;
                 if (minDis > getDistance(nearestFood, n.position)) {
                     minDis = getDistance(nearestFood, n.position);
                     nextMoveToFood = n;
+//                    System.out.println(board[n.position.x][n.position.y]);
                 }
+            }
+//            if (!root.position.equals(this.coords.get(0))) System.out.println("leak");
+//            findNextMove(nextMoveToFood);
         }
         node = nextMoveToFood;
+//        System.out.println(getDenyDir(nextMoveToFood.denyDir));
         return getDenyDir(nextMoveToFood.denyDir);
     }
 
