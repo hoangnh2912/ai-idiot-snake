@@ -15,7 +15,7 @@ public class Board extends JPanel implements Runnable {
     private final int EMPTY_FOOD = 9;
     private final int blockSize = 10; // size of each cell in the GUI
     private final int num_food = 100;
-    private final long updateTime = 30; // (lower = faster, higher = slower)
+    private final long updateTime = 20; // (lower = faster, higher = slower)
     private long timeStart;
     private ArrayList<Snake> snakes = new ArrayList<>();
     private ArrayList<Point> foods = new ArrayList<>();
@@ -145,14 +145,14 @@ public class Board extends JPanel implements Runnable {
         try {
             if (board[newPoint.x][newPoint.y] == Item.Snake || board[newPoint.x][newPoint.y] == Item.SnakeHead) {
                 System.out.println("dead " + board[newPoint.x][newPoint.y]);
-                for (Point p : snake.coords)
-                    board[p.x][p.y] = Item.Empty;
+//                for (Point p : snake.coords)
+//                    board[p.x][p.y] = Item.Empty;
                 snakes.remove(snake);
             } else {
-            snake.coords.add(HEAD_SNAKE_INDEX, newPoint);
-            Point tailPoint = snake.coords.get(snake.coords.size() - 1);
-            board[tailPoint.x][tailPoint.y] = Item.Empty;
-            snake.coords.remove(tailPoint);
+                snake.coords.add(HEAD_SNAKE_INDEX, newPoint);
+                Point tailPoint = snake.coords.get(snake.coords.size() - 1);
+                board[tailPoint.x][tailPoint.y] = Item.Empty;
+                snake.coords.remove(tailPoint);
             }
         } catch (Exception e) {
             System.out.println("dead out of move " + e.getMessage());
@@ -191,32 +191,35 @@ public class Board extends JPanel implements Runnable {
 
     @Override
     public void run() {
-        boolean isDone = false, isRun = false;
-        while (true) {
-            long timeEnd = System.currentTimeMillis();
-            if (!isRun) {
-                isRun = true;
-                for (Snake snake : snakes)
-                    snake.run();
-            } else {
-                isDone = true;
-                for (Snake snake : snakes) {
-                    if (!snake.isFindDone) {
-                        isDone = false;
-                        break;
+        synchronized (snakes) {
+            boolean isDone = false, isRun = false;
+            while (true) {
+                long timeEnd = System.currentTimeMillis();
+                if (!isRun) {
+                    isRun = true;
+                    for (Snake snake : snakes)
+                        if (snake.isAlive) snake.run();
+                } else {
+                    isDone = true;
+                    for (Snake snake : snakes) {
+                        if (!snake.isFindDone) {
+                            isDone = false;
+                            break;
+                        }
+                    }
+                }
+                if (timeEnd - timeStart >= updateTime) {
+                    if (isDone) {
+                        isRun = false;
+                        snakeMove();
+                        if (foods.isEmpty()) System.exit(EMPTY_FOOD);
+                        this.repaint();
+                        timeStart = timeEnd;
                     }
                 }
             }
-            if (timeEnd - timeStart >= updateTime) {
-                if (isDone) {
-                    isRun = false;
-                    snakeMove();
-                    if (foods.isEmpty()) System.exit(EMPTY_FOOD);
-                    this.repaint();
-                    timeStart = timeEnd;
-                }
-            }
         }
+
     }
 
 

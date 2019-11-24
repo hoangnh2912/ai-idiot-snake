@@ -67,7 +67,7 @@ public class Snake extends Thread {
 
     private synchronized Direction findNextMove(Node root) {
         i++;
-        if (!node.position.equals(coords.get(0))) System.out.println(color + " wrong - fine time :" + i);
+        if (!node.position.equals(coords.get(0))) node.position = coords.get(0);
         Point nearestFood = getNearestFood(coords.get(HEAD_SNAKE_INDEX), foods);
         ArrayList<Node> list = root.getChildren();
         if (list.isEmpty()) {
