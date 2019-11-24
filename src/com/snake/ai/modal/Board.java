@@ -14,8 +14,8 @@ public class Board extends JPanel implements Runnable {
     private final int EMPTY_BODY_SNAKE = -3;
     private final int EMPTY_FOOD = 9;
     private final int blockSize = 10; // size of each cell in the GUI
-    private final int num_food = 100;
-    private final long updateTime = 20; // (lower = faster, higher = slower)
+    private final int num_food = 60;
+    private final long updateTime = 60; // (lower = faster, higher = slower)
     private long timeStart;
     private ArrayList<Snake> snakes = new ArrayList<>();
     private ArrayList<Point> foods = new ArrayList<>();
@@ -44,7 +44,7 @@ public class Board extends JPanel implements Runnable {
         snakes.add(new Snake(new Point(56, 6), Direction.Up, Color.orange, foods, board));
         snakes.add(new Snake(new Point(27, 8), Direction.Up, Color.yellow, foods, board));
         snakes.add(new Snake(new Point(30, 22), Direction.Up, Color.cyan, foods, board));
-//        snakes.add(new Player(new Point(30, 9), Direction.Up, Color.pink));
+        snakes.add(new Player(new Point(30, 9), Direction.Up, Color.pink, foods, board));
         Random rand = new Random();
         for (int i = 0; i < num_food; i++) {
             int x = rand.nextInt(boardW);
@@ -52,8 +52,6 @@ public class Board extends JPanel implements Runnable {
             Point point = new Point(x, y);
             if (!foods.contains(point) && x > 2 && x < boardW - 2 && y > 2 && y < boardH - 2) foods.add(point);
         }
-//        for (Snake snake : snakes)
-//            snake.start();
     }
 
     @Override
@@ -89,9 +87,9 @@ public class Board extends JPanel implements Runnable {
                 } else if (cell == Item.Food) {
                     g.setColor(Color.blue);
                 } else if (cell == Item.NearestFood)
-                    g.setColor(Color.red);
+                    g.setColor(Color.blue);
                 else if (cell == Item.NearMove)
-                    g.setColor(Color.pink);
+                    g.setColor(Color.white);
                 else {
                     int index = indexHeadCell(new Point(i, j));
                     if (index != EMPTY_HEAD_SNAKE) {
@@ -113,6 +111,7 @@ public class Board extends JPanel implements Runnable {
 
     private synchronized void snakeMove() {
         try {
+            System.out.println(snakes.size() + " left snakes");
             for (Snake snake : snakes) {
                 if (snake.isAlive) {
                     if (isEat(snake))
@@ -137,16 +136,12 @@ public class Board extends JPanel implements Runnable {
 
     private synchronized void move(Snake snake) {
         Direction direction = snake.nextMove;
-//        if (direction == snake.denyDir) System.out.println("wrong");
-//        if (direction != snake.denyDir) {
         snake.denyDir = getDenyDir(direction);
         Point headPoint = snake.coords.get(HEAD_SNAKE_INDEX);
         Point newPoint = snake.newPointAfterMove(headPoint, direction);
         try {
             if (board[newPoint.x][newPoint.y] == Item.Snake || board[newPoint.x][newPoint.y] == Item.SnakeHead) {
                 System.out.println("dead " + board[newPoint.x][newPoint.y]);
-//                for (Point p : snake.coords)
-//                    board[p.x][p.y] = Item.Empty;
                 snakes.remove(snake);
             } else {
                 snake.coords.add(HEAD_SNAKE_INDEX, newPoint);
@@ -156,6 +151,7 @@ public class Board extends JPanel implements Runnable {
             }
         } catch (Exception e) {
             System.out.println("dead out of move " + e.getMessage());
+            snakes.remove(snake);
         }
 
 //        }

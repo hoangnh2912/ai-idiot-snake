@@ -10,7 +10,7 @@ import static com.snake.ai.utils.Utils.getDenyDir;
 public class Player extends Snake {
 
     Player(Point startPoint, Direction tailDirection, Color color, ArrayList<Point> foods, Item[][] board) {
-        super(startPoint, tailDirection, color,foods, board);
+        super(startPoint, tailDirection, color, foods, board);
         this.isBot = false;
     }
 
@@ -30,6 +30,8 @@ public class Player extends Snake {
 
     @Override
     public void run() {
+        isFindDone = false;
         nextMove = getDirectionPlayer() == getDenyDir(nextMove) ? nextMove : getDirectionPlayer();
+        isFindDone = true;
     }
 }
